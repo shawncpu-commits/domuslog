@@ -1,53 +1,101 @@
 @import "tailwindcss";
 
-/* Configurazione specifica per Tailwind v4 */
-@custom-variant dark (&:where(.dark, .dark *));
-
+/* 1. Definiamo i tuoi colori speciali nel tema */
 @theme {
-  /* Ripristiniamo il DarkSurface originale */
   --color-dark-surface: #1c1c1e;
   
-  /* Se Tailwind v4 non trova 'slate', lo mappiamo manualmente su gray per compatibilità */
-  --color-slate-50: var(--color-gray-50);
-  --color-slate-100: var(--color-gray-100);
-  --color-slate-900: var(--color-gray-900);
-  --color-slate-950: var(--color-gray-950);
+  /* Colori Pastello */
+  --color-pastel-indigo-50: #f5f7ff;
+  --color-pastel-indigo-500: #818cf8;
+  --color-pastel-indigo-600: #6366f1;
+  --color-pastel-rose-500: #fb7185;
+  --color-pastel-emerald-500: #34d399;
+  --color-pastel-amber-500: #fbbf24;
 }
+
+/* 2. Configuriamo la Dark Mode per funzionare con la classe .dark */
+@custom-variant dark (&:where(.dark, .dark *));
 
 :root {
   --safe-area-inset-top: env(safe-area-inset-top, 0px);
   --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* 3. Stili di base del Body */
 @layer base {
   body {
-    /* Usiamo classi che funzionano bene in entrambi i modi */
-    @apply antialiased transition-colors duration-500;
-    @apply bg-white text-slate-900;
+    @apply antialiased transition-colors duration-500 bg-white text-slate-900;
     font-family: 'Plus Jakarta Sans', sans-serif;
   }
-
-  /* Forza i colori quando la classe .dark è attiva */
   .dark body {
     @apply bg-slate-950 text-slate-50;
   }
 }
 
-@layer utilities {
-  /* Ripristiniamo le tue card M3 che ora useranno la variabile corretta */
-  .m3-card {
-    @apply rounded-[48px] bg-white border-2 border-transparent transition-all duration-300 overflow-hidden;
-  }
-  .dark .m3-card {
-    @apply bg-dark-surface border-white/5;
-  }
+/* 4. I tuoi Componenti (Pulsanti, Card, Dock) */
+/* Usiamo CSS standard invece di @apply per essere sicuri che si vedano */
+.m3-card {
+  border-radius: 48px;
+  background-color: white;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+.dark .m3-card {
+  background-color: var(--color-dark-surface);
+  border-color: rgba(255, 255, 255, 0.05);
+}
 
-  .m3-dock {
-    @apply bg-white/80 backdrop-blur-3xl border-2 border-white/20 shadow-2xl rounded-[44px];
-  }
-  .dark .m3-dock {
-    @apply bg-dark-surface/80 border-white/5;
-  }
+.m3-button {
+  display: inline-block;
+  border-radius: 9999px;
+  font-weight: 900;
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  padding: 1.25rem 2rem;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  text-align: center;
+}
+.m3-button:active {
+  transform: scale(0.95);
+}
 
-  /* Mantieni qui sotto tutte le tue classi .bg-pastel-XXX che avevi prima... */
+.m3-dock {
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(24px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border-radius: 44px;
+}
+.dark .m3-dock {
+  background-color: rgba(28, 28, 30, 0.8);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+/* 5. Utility per i colori pastello (così tornano i colori) */
+.bg-pastel-indigo-50 { background-color: var(--color-pastel-indigo-50); }
+.bg-pastel-indigo-500 { background-color: var(--color-pastel-indigo-500); }
+.text-pastel-indigo-600 { color: var(--color-pastel-indigo-600); }
+
+.bg-pastel-rose-50 { background-color: #fff1f2; }
+.bg-pastel-rose-500 { background-color: var(--color-pastel-rose-500); }
+
+.bg-pastel-emerald-50 { background-color: #ecfdf5; }
+.bg-pastel-emerald-500 { background-color: var(--color-pastel-emerald-500); }
+
+/* Animazioni */
+@keyframes dock-appear {
+  from { transform: translate(-50%, 100px); opacity: 0; }
+  to { transform: translate(-50%, 0); opacity: 1; }
+}
+
+.dock-appear {
+  position: fixed;
+  bottom: 2rem;
+  left: 50%;
+  transform: translateX(-50%);
+  animation: dock-appear 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  z-index: 50;
 }
