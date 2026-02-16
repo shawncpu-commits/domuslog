@@ -53,14 +53,36 @@
   .m3-button {
     @apply inline-block rounded-full font-black uppercase text-[11px] tracking-widest px-8 py-5 transition-all duration-300 active:scale-95 text-center cursor-pointer;
   }
+.m3-dock {
+  position: fixed;
+  bottom: 2rem; /* Distanza dal fondo */
+  left: 50%;
+  transform: translateX(-50%); /* Forza il centraggio perfetto */
+  
+  /* Stili estetici */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 0.75rem 1.5rem;
+  
+  background-color: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(24px);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  border-radius: 44px;
+  z-index: 50;
+  
+  /* Evita che la dock si allarghi troppo su schermi grandi */
+  width: max-content;
+  min-width: 280px;
+}
 
-  .m3-dock {
-    @apply fixed bottom-8 left-1/2 -translate-x-1/2 bg-white/80 backdrop-blur-3xl border-2 border-white/20 shadow-2xl rounded-[44px] z-50;
-  }
-  .dark .m3-dock {
-    background-color: rgba(28, 28, 30, 0.8);
-    @apply border-white/5;
-  }
+.dark .m3-dock {
+  background-color: rgba(28, 28, 30, 0.8);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+  
 }
 
 /* 5. LOGICA SCAN AI E UTILITY */
