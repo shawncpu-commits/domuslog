@@ -1,126 +1,122 @@
 @import "tailwindcss";
 
-/* 1. DEFINIZIONE TEMA */
-@theme {
-  --color-dark-surface: #1c1c1e;
-  --color-pastel-indigo: #818cf8;
-  --color-pastel-rose: #fb7185;
-  --color-pastel-emerald: #34d399;
-  --color-pastel-amber: #fbbf24;
-}
-
+/* 1. VARIANTI E ROOT */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* 2. RESET E BASE */
 :root {
   --safe-area-inset-top: env(safe-area-inset-top, 0px);
   --safe-area-inset-bottom: env(safe-area-inset-bottom, 0px);
 }
 
+/* 2. BASE */
 body {
   margin: 0;
   padding: 0;
   min-height: 100vh;
   font-family: 'Plus Jakarta Sans', sans-serif;
-  background-color: white;
-  color: #0f172a; /* slate-900 */
-  -webkit-font-smoothing: antialiased;
+  background-color: #ffffff;
+  color: #0f172a;
+  transition: background-color 0.3s, color 0.3s;
 }
 
 .dark body {
-  background-color: #020617; /* slate-950 */
-  color: #f8fafc; /* slate-50 */
+  background-color: #020617;
+  color: #f8fafc;
 }
 
-/* 3. LA DOCK (CORREZIONE CENTRAGGIO) */
+/* 3. LA DOCK (DIMENSIONI E CENTRAGGIO) */
 .m3-dock {
   position: fixed !important;
-  bottom: 20px !important;
+  bottom: 30px !important;
   left: 50% !important;
-  transform: translateX(-50%) !important; /* Questo DEVE centrarla */
+  transform: translateX(-50%) !important;
   
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 12px 24px;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 20px !important;
+  padding: 12px 28px !important;
   
-  background-color: rgba(255, 255, 255, 0.85);
+  background-color: rgba(255, 255, 255, 0.9) !important;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-  border-radius: 40px;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1) !important;
+  border-radius: 50px !important;
   z-index: 999;
-  width: auto;
-  min-width: 280px;
-  white-space: nowrap;
+  width: auto !important;
+  min-width: 320px !important; /* Più larga */
 }
 
 .dark .m3-dock {
-  background-color: rgba(28, 28, 30, 0.85);
-  border-color: rgba(255, 255, 255, 0.1);
+  background-color: rgba(30, 41, 59, 0.9) !important;
+  border-color: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5) !important;
 }
 
-/* 4. COMPONENTI SCAN AI */
-.scan-overlay {
-  position: fixed !important;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0,0,0,0.7);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.scan-region {
-  width: 260px;
-  height: 260px;
-  border: 3px dashed #818cf8;
-  border-radius: 24px;
-  position: relative;
-}
-
-/* 5. PULSANTI E CARD */
+/* 4. PULSANTI A PILLOLA (M3-BUTTON) */
 .m3-button {
-  all: unset; /* Reset totale per evitare conflitti */
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 100px;
-  font-weight: 800;
-  text-transform: uppercase;
-  font-size: 11px;
-  letter-spacing: 1px;
-  padding: 16px 32px;
-  cursor: pointer;
-  transition: transform 0.2s ease;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background-color: #6366f1 !important; /* Indigo di base */
+  color: #ffffff !important;
+  border-radius: 9999px !important; /* Forma a pillola */
+  padding: 14px 28px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  font-size: 12px !important;
+  letter-spacing: 1px !important;
+  border: none !important;
+  cursor: pointer !important;
+  transition: transform 0.2s, background-color 0.2s !important;
+  box-shadow: 0 4px 10px rgba(99, 102, 241, 0.3) !important;
 }
 
 .m3-button:active {
-  transform: scale(0.95);
+  transform: scale(0.92) !important;
 }
 
+/* 5. COLORI PASTELLO (FORZATI CON HEX) */
+.bg-pastel-indigo { background-color: #f5f7ff !important; }
+.dark .bg-pastel-indigo { background-color: rgba(99, 102, 241, 0.15) !important; color: #a5b4fc !important; }
+
+.bg-pastel-rose { background-color: #fff1f2 !important; }
+.dark .bg-pastel-rose { background-color: rgba(244, 63, 94, 0.15) !important; color: #fda4af !important; }
+
+.bg-pastel-emerald { background-color: #ecfdf5 !important; }
+.dark .bg-pastel-emerald { background-color: rgba(16, 185, 129, 0.15) !important; color: #6ee7b7 !important; }
+
+/* 6. CARD */
 .m3-card {
-  background: white;
-  border-radius: 32px;
-  padding: 20px;
-  border: 1px solid rgba(0,0,0,0.05);
-  transition: all 0.3s ease;
+  background-color: #ffffff !important;
+  border-radius: 32px !important;
+  padding: 24px !important;
+  border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  color: #0f172a !important;
 }
 
 .dark .m3-card {
-  background: #1c1c1e;
-  border-color: rgba(255,255,255,0.05);
+  background-color: #1e293b !important;
+  border-color: rgba(255, 255, 255, 0.05) !important;
+  color: #f8fafc !important;
 }
 
-/* 6. UTILITY COLORI PASTELLO */
-.bg-pastel-indigo { background-color: #f5f7ff; }
-.dark .bg-pastel-indigo { background-color: rgba(129, 140, 248, 0.1); }
+/* 7. SCAN AI */
+.scan-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  background: rgba(0, 0, 0, 0.8) !important;
+  z-index: 1000 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
 
-.bg-pastel-rose { background-color: #fff1f2; }
-.dark .bg-pastel-rose { background-color: rgba(251, 113, 133, 0.1); }
+.scan-region {
+  width: 280px !important;
+  height: 280px !important;
+  border: 4px dashed #6366f1 !important;
+  border-radius: 30px !important;
+}
