@@ -1,6 +1,15 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  /* Definiamo i colori personalizzati che usi nel progetto */
+  --color-darkSurface: #1c1c1e;
+  
+  /* Definiamo le ombre personalizzate */
+  --shadow-soft: 0 10px 30px -5px rgba(0, 0, 0, 0.04), 0 4px 10px -5px rgba(0, 0, 0, 0.02);
+  --shadow-pastel-indigo: 0 20px 40px -12px rgba(99, 102, 241, 0.25);
+  --shadow-pastel-rose: 0 20px 40px -12px rgba(251, 113, 133, 0.25);
+  --shadow-pastel-emerald: 0 20px 40px -12px rgba(52, 211, 153, 0.25);
+}
 
 :root {
   --safe-area-inset-top: env(safe-area-inset-top, 0px);
@@ -9,7 +18,8 @@
 
 @layer base {
   body {
-    @apply antialiased text-slate-900 bg-slate-50 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-500;
+    /* Usiamo classi standard che Tailwind v4 riconosce sicuramente */
+    @apply antialiased text-gray-900 bg-gray-50 dark:bg-black dark:text-gray-100 transition-colors duration-500;
     font-family: 'Plus Jakarta Sans', sans-serif;
     text-rendering: optimizeLegibility;
   }
@@ -46,29 +56,15 @@
   .bg-pastel-amber-500 { background-color: #fbbf24; }
   .text-pastel-amber-600 { color: #d97706; }
 
-  /* Expressive Shadows */
-  .shadow-soft {
-    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.04), 0 4px 10px -5px rgba(0, 0, 0, 0.02);
-  }
-  .shadow-pastel-indigo {
-    box-shadow: 0 20px 40px -12px rgba(99, 102, 241, 0.25);
-  }
-  .shadow-pastel-rose {
-    box-shadow: 0 20px 40px -12px rgba(251, 113, 133, 0.25);
-  }
-  .shadow-pastel-emerald {
-    box-shadow: 0 20px 40px -12px rgba(52, 211, 153, 0.25);
-  }
-
   /* Custom Classes */
   .m3-card {
-    @apply rounded-[48px] bg-white dark:bg-darkSurface border-2 border-transparent transition-all duration-300 overflow-hidden;
+    @apply rounded-[48px] bg-white dark:bg-[--color-darkSurface] border-2 border-transparent transition-all duration-300 overflow-hidden;
   }
   .m3-button {
     @apply rounded-full font-black uppercase text-[11px] tracking-widest px-8 py-5 transition-all duration-300 active:scale-95;
   }
   .m3-dock {
-    @apply bg-white/80 dark:bg-darkSurface/80 backdrop-blur-3xl border-2 border-white/20 dark:border-white/5 shadow-2xl rounded-[44px];
+    @apply bg-white/80 dark:bg-[--color-darkSurface]/80 backdrop-blur-3xl border-2 border-white/20 dark:border-white/5 shadow-2xl rounded-[44px];
   }
 
   .custom-scrollbar::-webkit-scrollbar {
