@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="it" class="overflow-x-hidden">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    
+    <!-- SEO & Identity -->
+    <title>DomusLog | Gestione Condominiale AI</title>
+    <meta name="description" content="Gestione professionale condominiale con intelligenza artificiale integrata." />
+    
+    <!-- PWA Core -->
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="theme-color" content="#818cf8" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    
+    <!-- iOS / Apple Specific -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="DomusLog" />
+    <link rel="apple-touch-icon" href="./favicon-32x32.png" />
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/x-icon" href="./favicon.ico" />
+    <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16x16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32x32.png" />
+    
+    <script>
+      // Mock process object for browser compatibility with environment variables
+      window.process = {
+        env: {
+          API_KEY: '',
+          VITE_SUPABASE_URL: '',
+          VITE_SUPABASE_ANON_KEY: ''
+        }
+      };
+    </script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,200..800;1,200..800&display=swap" rel="stylesheet">
+    
+    <!-- html2pdf.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script type="importmap">
+    {
+      "imports": {
+        "react": "https://esm.sh/react@18.2.0",
+        "react/": "https://esm.sh/react@18.2.0/",
+        "react/jsx-runtime": "https://esm.sh/react@18.2.0/jsx-runtime",
+        "react-dom": "https://esm.sh/react-dom@18.2.0",
+        "react-dom/client": "https://esm.sh/react-dom@18.2.0/client",
+        "react-dom/": "https://esm.sh/react-dom@18.2.0/",
+        "lucide-react": "https://esm.sh/lucide-react@0.462.0?external=react",
+        "@google/genai": "https://esm.sh/@google/genai@1.35.0",
+        "recharts": "https://esm.sh/recharts@2.12.7?external=react",
+        "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.39.3",
+        "jspdf": "https://esm.sh/jspdf@2.5.1",
+        "jspdf-autotable": "https://esm.sh/jspdf-autotable@3.8.2"
+      }
+    }
+    </script>
+  <link rel="stylesheet" href="/index.css">
+</head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="index.tsx"></script>
+  <script type="module" src="/index.tsx"></script>
+</body>
+</html>
