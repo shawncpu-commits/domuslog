@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { AppView, Category, Transaction, BankAccount, Unit, MillesimalTable, WaterMeter, WaterReading, TrashItem, InsurancePolicy, CondoRegulation, UserRole } from './types';
 import { Home } from './screens/Home';
 import { Expenses } from './screens/Expenses';
@@ -19,9 +19,11 @@ import { Onboarding } from './screens/Onboarding';
 import { Model770 } from './screens/Model770';
 import { Dock } from './components/Dock';
 import { MaterialCard } from './components/MaterialCard';
-import { Building2, LogOut, ArrowRight, Loader2, RefreshCcw, Menu } from 'lucide-react';
+// AGGIUNTO Menu QUI SOTTO
+import { Building2, LogOut, ArrowRight, Loader2, UserCircle2, Mail, Lock, Smartphone, Globe, Home as HomeIcon, RefreshCcw, Menu } from 'lucide-react';
 import { MOCK_CATEGORIES } from './constants';
 import { supabase } from './supabase';
+import { calculateTransactionSplit } from './services/calculatorService';
 import './index.css';
 
 const App: React.FC = () => {
@@ -35,6 +37,7 @@ const App: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [userRole, setUserRole] = useState<UserRole>(() => (localStorage.getItem('userRole') as UserRole) || 'CONDOMINO');
   const [activeUnitId, setActiveUnitId] = useState<string | null>(() => localStorage.getItem('activeUnitId'));
+  const [activeUnitName, setActiveUnitName] = useState<string | null>(() => localStorage.getItem('activeUnitName'));
   const [tempCondoName, setTempCondoName] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
@@ -52,6 +55,7 @@ const App: React.FC = () => {
   const [waterReadings, setWaterReadings] = useState<WaterReading[]>([]);
   const [trash, setTrash] = useState<TrashItem[]>([]);
   const [insurancePolicies, setInsurancePolicies] = useState<InsurancePolicy[]>([]);
+  const [regulation, setRegulation] = useState<CondoRegulation | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
 
   useEffect(() => {
@@ -61,13 +65,26 @@ const App: React.FC = () => {
         setUser(session.user);
         const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
         if (profile) {
-          setUserRole(profile.role as UserRole);
-          localStorage.setItem('userRole', profile.role);
+          const role = profile.role as UserRole;
+          setUserRole(role);
+          localStorage.setItem('userRole', role);
         }
       }
       setLoading(false);
     };
     initAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      setUser(session?.user || null);
+      if (session?.user) {
+        const { data: profile } = await supabase.from('profiles').select('role').eq('id', session.user.id).single();
+        if (profile) {
+          setUserRole(profile.role as UserRole);
+          localStorage.setItem('userRole', profile.role);
+        }
+      }
+    });
+    return () => subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
@@ -85,12 +102,45 @@ const App: React.FC = () => {
     setViewParams(params);
   }, []);
 
-  const handleLogout = async () => { 
-    await supabase.auth.signOut(); 
-    setCondoId(null); 
-    localStorage.clear(); 
-    window.location.reload(); 
-  };
+  useEffect(() => {
+    if (!condoId) { setIsDataLoaded(false); return; }
+    const fetchData = async () => {
+      setIsSyncing(true);
+      if (condoId.startsWith('DB_')) {
+        try {
+          const { data: condoData } = await supabase.from('condos').select('*').eq('id', condoId).single();
+          if (condoData) { setCondoName(condoData.name); setRegulation(condoData.regulation); }
+          const [cats, bks, unts, tabs, mtrs, trsh, ins] = await Promise.all([
+            supabase.from('categories').select('*').eq('condo_id', condoId),
+            supabase.from('bank_accounts').select('*').eq('condo_id', condoId),
+            supabase.from('units').select('*').eq('condo_id', condoId),
+            supabase.from('millesimal_tables').select('*').eq('condo_id', condoId).order('order_idx'),
+            supabase.from('water_meters').select('*').eq('condo_id', condoId),
+            supabase.from('trash').select('*').eq('condo_id', condoId),
+            supabase.from('insurance_policies').select('*').eq('condo_id', condoId)
+          ]);
+          setCategories(cats.data || MOCK_CATEGORIES);
+          setBankAccounts(bks.data || []);
+          setUnits((unts.data || []).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true })));
+          setMillesimalTables(tabs.data || []);
+          setWaterMeters(mtrs.data || []);
+          setTrash(trsh.data || []);
+          setInsurancePolicies(ins.data || []);
+          const [txs, rdgs] = await Promise.all([
+            supabase.from('transactions').select('*').eq('condo_id', condoId).eq('year', selectedYear),
+            supabase.from('water_readings').select('*').eq('condo_id', condoId).eq('year', selectedYear)
+          ]);
+          setTransactions(txs.data || []);
+          setWaterReadings(rdgs.data || []);
+          setIsDataLoaded(true);
+        } catch (e) { console.error(e); }
+      }
+      setIsSyncing(false);
+    };
+    fetchData();
+  }, [condoId, selectedYear]);
+
+  const handleLogout = async () => { await supabase.auth.signOut(); setCondoId(null); localStorage.clear(); window.location.reload(); };
 
   const handleAccessAdmin = async (e: React.FormEvent) => {
     e.preventDefault(); setAccessError(''); setLoading(true);
