@@ -1,10 +1,8 @@
-
-import { UnitCalculationResult } from './calculatorService';
-import { Unit } from '../types';
+import { UnitCalculationResult } from './distributionUtils';
+import { Unit, Transaction } from '../types';
 
 /**
- * Esporta i risultati del riparto in formato Excel (CSV)
- * Segue la logica del codice Python: trasforma dizionario in lista e salva
+ * ESPORTA IL RIPARTO PER I CONDOMINI
  */
 export const exportToExcel = (
   results: Record<string, UnitCalculationResult>,
@@ -14,7 +12,6 @@ export const exportToExcel = (
 ) => {
   const headers = ['Unità Immobiliare', 'Quota Millesimale (€)', 'Quota Acqua (€)', 'TOTALE DOVUTO (€)'];
   
-  // Trasformiamo i risultati in una lista per l'esportazione, simile alla logica pandas
   const datiPerTabella = Object.entries(results).map(([uid, valori]) => {
     const unit = units.find(u => u.id === uid);
     return [
@@ -33,22 +30,60 @@ export const exportToExcel = (
     ...datiPerTabella
   ];
 
-  const csvContent = csvRows.map(row => row.join(";")).join("\n");
+  downloadCSV(csvRows, `Riparto_${condoName}_${year}.csv`);
+};
+
+/**
+ * ESPORTA IL RIEPILOGO FISCALE (MODELLO 770)
+ */
+export const export770ToExcel = (
+  transactions: Transaction[],
+  year: string,
+  condoName: string
+) => {
+  // Prendiamo solo le spese con ritenuta dell'anno scelto
+  const spese770 = transactions.filter(t => 
+    t.type === 'EXPENSE' && 
+    (t.ritenuta && t.ritenuta > 0) && 
+    t.date.startsWith(year)
+  );
+
+  const headers = ['Data', 'Fornitore', 'P.IVA/CF', 'Cod. Tributo', 'Imponibile (€)', 'Ritenuta (€)', 'Totale Lordo (€)'];
+  
+  const rows = spese770.map(t => [
+    t.date,
+    t.provider || '',
+    t.providerFiscalCode || '',
+    t.tributoCode || '',
+    (t.netAmount || 0).toFixed(2).replace('.', ','),
+    (t.ritenuta || 0).toFixed(2).replace('.', ','),
+    t.amount.toFixed(2).replace('.', ',')
+  ]);
+
+  const csvRows = [
+    [`RIEPILOGO RITENUTE D'ACCONTO (MOD. 770) - ${condoName}`],
+    [`Anno: ${year}`],
+    [],
+    headers,
+    ...rows
+  ];
+
+  downloadCSV(csvRows, `770_${condoName}_${year}.csv`);
+};
+
+// Funzione di supporto per scaricare il file
+const downloadCSV = (rows: any[][], fileName: string) => {
+  const csvContent = rows.map(row => row.join(";")).join("\n");
   const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.setAttribute("href", url);
-  link.setAttribute("download", `Riparto_${condoName.replace(/\s+/g, '_')}_${year}.csv`);
+  link.setAttribute("download", fileName.replace(/\s+/g, '_'));
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
 };
 
-/**
- * Simula il comportamento della classe ReportCondominio(FPDF)
- * Utilizza il motore di stampa del browser con layout dedicato
- */
 export const exportToPDF = () => {
-  // La formattazione della tabella PDF è gestita via CSS @media print nel componente Budget.tsx
   window.print();
 };
