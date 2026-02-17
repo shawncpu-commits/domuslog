@@ -320,4 +320,18 @@ const App: React.FC = () => {
           }
         })()}
       </main>
-      <Dock currentView={currentView}
+      <Dock 
+        currentView={currentView} 
+        onViewChange={handleNavigate} 
+        userRole={userRole} 
+      />
+      
+      {/* 2. AGGIUNGI LA CHIUSURA DEL DIV E DEL COMPONENTE */}
+      {isSyncing && (
+        <div className="fixed bottom-24 right-6 bg-slate-900 text-white px-4 py-2 rounded-full text-[8px] font-black uppercase flex items-center gap-2 animate-pulse">
+          <RefreshCcw size={12} className="animate-spin" /> Sync...
+        </div>
+      )}
+    </div>
+  );
+};
