@@ -19,7 +19,7 @@ import { Onboarding } from './screens/Onboarding';
 import { Model770 } from './screens/Model770';
 import { Dock } from './components/Dock';
 import { MaterialCard } from './components/MaterialCard';
-import { Building2, LogOut, ArrowRight, Loader2, UserCircle2, Mail, Lock, Smartphone, Globe, Home as HomeIcon, RefreshCcw } from 'lucide-react';
+import { Building2, LogOut, ArrowRight, Loader2, UserCircle2, Mail, Lock, Smartphone, Globe, Home as HomeIcon, RefreshCcw, Menu } from 'lucide-react';
 import { MOCK_CATEGORIES } from './constants';
 import { supabase } from './supabase';
 import { calculateTransactionSplit } from './services/calculatorService';
