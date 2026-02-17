@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { AppView, Category, Transaction, BankAccount, Unit, MillesimalTable, WaterMeter, WaterReading, TrashItem, InsurancePolicy, CondoRegulation, UserRole } from './types';
 import { Home } from './screens/Home';
 import { Expenses } from './screens/Expenses';
@@ -15,14 +15,25 @@ import { Trash } from './screens/Trash';
 import { Insurance } from './screens/Insurance';
 import { Regulation } from './screens/Regulation';
 import { Receipts } from './screens/Receipts';
-import { Onboarding } from './screens/Onboarding';
 import { Model770 } from './screens/Model770';
 import { Dock } from './components/Dock';
 import { MaterialCard } from './components/MaterialCard';
-import { Building2, LogOut, ArrowRight, Loader2, UserCircle2, Mail, Lock, Smartphone, Globe, Home as HomeIcon, RefreshCcw, Menu } from 'lucide-react';
+import { 
+  Building2, 
+  LogOut, 
+  ArrowRight, 
+  Loader2, 
+  UserCircle2, 
+  Mail, 
+  Lock, 
+  Smartphone, 
+  Globe, 
+  Home as HomeIcon, 
+  RefreshCcw, 
+  Menu 
+} from 'lucide-react';
 import { MOCK_CATEGORIES } from './constants';
 import { supabase } from './supabase';
-import { calculateTransactionSplit } from './services/calculatorService';
 import './index.css';
 
 const App: React.FC = () => {
@@ -53,7 +64,6 @@ const App: React.FC = () => {
   const [accessError, setAccessError] = useState('');
 
   // --- STATI DATI ---
-  const [showOnboarding, setShowOnboarding] = useState(false);
   const [selectedYear, setSelectedYear] = useState(() => localStorage.getItem('lastSelectedYear') || new Date().getFullYear().toString());
   const [categories, setCategories] = useState<Category[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
@@ -67,13 +77,12 @@ const App: React.FC = () => {
   const [regulation, setRegulation] = useState<CondoRegulation | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('theme') === 'dark');
 
-  // --- 1. GESTIONE AUTENTICAZIONE E RUOLI REALI ---
+  // --- 1. GESTIONE AUTENTICAZIONE ---
   useEffect(() => {
     const initAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session?.user) {
         setUser(session.user);
-        // Recupera il ruolo reale dal database
         const { data: profile } = await supabase
           .from('profiles')
           .select('role')
@@ -105,7 +114,7 @@ const App: React.FC = () => {
     return () => subscription.unsubscribe();
   }, []);
 
-  // --- 2. SINCRONIZZAZIONE REALTIME (PC <-> APK) ---
+  // --- 2. SINCRONIZZAZIONE REALTIME ---
   useEffect(() => {
     if (!condoId || !condoId.startsWith('DB_')) return;
 
@@ -117,7 +126,6 @@ const App: React.FC = () => {
         table: 'transactions', 
         filter: `condo_id=eq.${condoId}` 
       }, (payload) => {
-        // Sincronizzazione immediata dei dati tra dispositivi
         if (payload.eventType === 'INSERT') setTransactions(prev => [...prev, payload.new as Transaction]);
         if (payload.eventType === 'UPDATE') setTransactions(prev => prev.map(t => t.id === payload.new.id ? payload.new as Transaction : t));
         if (payload.eventType === 'DELETE') setTransactions(prev => prev.filter(t => t.id === payload.old.id));
@@ -127,22 +135,7 @@ const App: React.FC = () => {
     return () => { supabase.removeChannel(channel); };
   }, [condoId]);
 
-  // --- 3. LOGICA DI NAVIGAZIONE E CARICAMENTO ---
-  const handleNavigate = useCallback((view: AppView, params: any = null) => {
-    setCurrentView(view);
-    setViewParams(params);
-  }, []);
-
-  const sortUnitsByFloor = (unitsList: Unit[]) => {
-    return [...(unitsList || [])].sort((a, b) => {
-      if ((a.floor ?? 0) !== (b.floor ?? 0)) return (a.floor ?? 0) - (b.floor ?? 0);
-      const stairA = (a.staircase || '').toUpperCase();
-      const stairB = (b.staircase || '').toUpperCase();
-      if (stairA !== stairB) return stairA.localeCompare(stairB);
-      return a.name.localeCompare(b.name, undefined, { numeric: true });
-    });
-  };
-
+  // --- 3. LOGICA DI CARICAMENTO DATI ---
   useEffect(() => {
     if (!condoId) {
       setIsDataLoaded(false);
@@ -171,7 +164,7 @@ const App: React.FC = () => {
 
           setCategories(cats.data || MOCK_CATEGORIES);
           setBankAccounts(bks.data || []);
-          setUnits(sortUnitsByFloor(unts.data || []));
+          setUnits((unts.data || []).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true })));
           setMillesimalTables(tabs.data || []);
           setWaterMeters(mtrs.data || []);
           setTrash(trsh.data || []);
@@ -191,7 +184,11 @@ const App: React.FC = () => {
     fetchData();
   }, [condoId, selectedYear]);
 
-  // --- 4. FUNZIONI DI LOGIN E LOGOUT ---
+  const handleNavigate = useCallback((view: AppView, params: any = null) => {
+    setCurrentView(view);
+    setViewParams(params);
+  }, []);
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     setCondoId(null);
@@ -199,57 +196,11 @@ const App: React.FC = () => {
     window.location.reload();
   };
 
-  const handleAccessAdmin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setAccessError('');
-    setLoading(true);
-    try {
-      if (isAuthModeRegister) {
-        const { error } = await supabase.auth.signUp({ email: adminEmail, password: adminPassword });
-        if (error) throw error;
-        alert("Controlla l'email per confermare!");
-      } else {
-        const { error } = await supabase.auth.signInWithPassword({ email: adminEmail, password: adminPassword });
-        if (error) throw error;
-        const id = `DB_${tempCondoName.trim().toUpperCase().replace(/\s+/g, '_')}`;
-        setCondoId(id);
-        setCondoName(tempCondoName.toUpperCase());
-        localStorage.setItem('activeCondoId', id);
-        localStorage.setItem('activeCondoName', tempCondoName.toUpperCase());
-      }
-    } catch (err: any) { setAccessError(err.message); } finally { setLoading(false); }
-  };
-
-  const handleAccessLocal = (e: React.FormEvent) => {
-    e.preventDefault();
-    const id = `LOCAL_${tempCondoName.trim().toUpperCase().replace(/\s+/g, '_')}`;
-    setCondoId(id);
-    setUserRole('ADMIN');
-    localStorage.setItem('activeCondoId', id);
-  };
-
-  const handleAccessCondomino = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setAccessError('');
-    setLoading(true);
-    try {
-      const id = `DB_${tempCondoName.trim().toUpperCase().replace(/\s+/g, '_')}`;
-      const { data: unit } = await supabase.from('units').select('*').eq('condo_id', id).ilike('name', condominoUnitName).single();
-      if (!unit) throw new Error("Unità non trovata");
-      
-      setCondoId(id);
-      setUserRole('CONDOMINO');
-      setActiveUnitId(unit.id);
-      setActiveUnitName(unit.name);
-      localStorage.setItem('activeUnitId', unit.id);
-    } catch (err: any) { setAccessError(err.message); } finally { setLoading(false); }
-  };
-
-  // --- RENDERING UI ---
+  // --- RENDERING LOGIN ---
   if (loading) return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950">
       <Loader2 className="animate-spin text-indigo-600 mb-4" size={40} />
-      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Caricamento Profilo...</p>
+      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Caricamento...</p>
     </div>
   );
 
@@ -271,68 +222,55 @@ const App: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 text-left border-t pt-12">
-            {/* LOCALE */}
             <div className="p-8 bg-slate-50 dark:bg-slate-800/30 rounded-[40px] border">
               <h2 className="font-black uppercase text-sm mb-4">Prova Locale</h2>
-              <form onSubmit={handleAccessLocal}>
-                <button type="submit" disabled={!tempCondoName} className="w-full py-4 bg-white border-2 border-indigo-100 rounded-[32px] font-black text-indigo-600 uppercase text-[10px] flex items-center justify-center gap-2">Entra <ArrowRight size={16}/></button>
-              </form>
+              <button onClick={() => { setCondoId(`LOCAL_${tempCondoName.toUpperCase()}`); setUserRole('ADMIN'); }} disabled={!tempCondoName} className="w-full py-4 bg-white border-2 border-indigo-100 rounded-[32px] font-black text-indigo-600 uppercase text-[10px] flex items-center justify-center gap-2">Entra <ArrowRight size={16}/></button>
             </div>
 
-            {/* CLOUD ADMIN */}
             <div className="p-8 bg-indigo-600 rounded-[40px] text-white shadow-xl">
               <h2 className="font-black uppercase text-sm mb-4">Cloud Admin</h2>
-              <form onSubmit={handleAccessAdmin} className="space-y-3">
+              <div className="space-y-3">
                 <input type="email" value={adminEmail} onChange={e => setAdminEmail(e.target.value)} placeholder="Email" className="w-full p-4 rounded-2xl bg-white/10 border border-white/20 text-xs text-white" />
                 <input type="password" value={adminPassword} onChange={e => setAdminPassword(e.target.value)} placeholder="Password" className="w-full p-4 rounded-2xl bg-white/10 border border-white/20 text-xs text-white" />
-                <button type="submit" className="w-full py-4 bg-white text-indigo-600 rounded-[32px] font-black uppercase text-[10px]">{isAuthModeRegister ? 'Registrati' : 'Accedi'}</button>
-                <button type="button" onClick={() => setIsAuthModeRegister(!isAuthModeRegister)} className="w-full text-[8px] uppercase opacity-70">Switch Login/Register</button>
-              </form>
+                <button onClick={async () => {
+                  const { error } = await supabase.auth.signInWithPassword({ email: adminEmail, password: adminPassword });
+                  if (!error) setCondoId(`DB_${tempCondoName.toUpperCase()}`);
+                }} className="w-full py-4 bg-white text-indigo-600 rounded-[32px] font-black uppercase text-[10px]">Accedi</button>
+              </div>
             </div>
 
-            {/* CONDOMINO */}
             <div className="p-8 bg-emerald-50 dark:bg-emerald-900/10 rounded-[40px] border border-emerald-100">
               <h2 className="font-black uppercase text-sm text-emerald-600 mb-4">Area Condomino</h2>
-              <form onSubmit={handleAccessCondomino} className="space-y-3">
-                <input type="email" value={condominoEmail} onChange={e => setCondominoEmail(e.target.value)} placeholder="Tua Email" className="w-full p-4 rounded-2xl border text-xs" />
+              <div className="space-y-3">
                 <input type="text" value={condominoUnitName} onChange={e => setCondominoUnitName(e.target.value)} placeholder="Unità (es. Int. 1)" className="w-full p-4 rounded-2xl border text-xs uppercase" />
-                <button type="submit" className="w-full py-4 bg-emerald-600 text-white rounded-[32px] font-black uppercase text-[10px]">Entra <ArrowRight size={16}/></button>
-              </form>
+                <button onClick={() => { setCondoId(`DB_${tempCondoName.toUpperCase()}`); setUserRole('CONDOMINO'); }} className="w-full py-4 bg-emerald-600 text-white rounded-[32px] font-black uppercase text-[10px]">Entra</button>
+              </div>
             </div>
           </div>
-          {accessError && <p className="mt-4 text-rose-500 font-bold uppercase text-[10px]">{accessError}</p>}
         </MaterialCard>
       </div>
     );
   }
 
+  // --- RENDERING APP ---
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors">
       <main className="container mx-auto px-4 pt-8 pb-32">
         {(() => {
           switch (currentView) {
-            case AppView.HOME: return <Home condoName={condoName} selectedYear={selectedYear} onYearChange={setSelectedYear} onNavigate={handleNavigate} categories={categories} transactions={transactions} isDarkMode={isDarkMode} onToggleDarkMode={() => setIsDarkMode(!isDarkMode)} units={units} insurancePolicies={insurancePolicies} onNameChange={async (name) => { setCondoName(name); await supabase.from('condos').update({name}).eq('id', condoId); }} onCloseCondo={handleLogout} userRole={userRole} activeUnitId={activeUnitId} />;
-            case AppView.EXPENSES: return <Expenses onBack={() => setCurrentView(AppView.HOME)} categories={categories} transactions={transactions} onTransactionsChange={(tx) => setTransactions(tx)} millesimalTables={millesimalTables} bankAccounts={bankAccounts} units={units} userRole={userRole} activeUnitId={activeUnitId} />;
-            case AppView.BUDGET: return <Budget onBack={() => setCurrentView(AppView.HOME)} transactions={transactions} units={units} categories={categories} tables={millesimalTables} selectedYear={selectedYear} waterReadings={waterReadings} waterMeters={waterMeters} isDarkMode={isDarkMode} condoId={condoId} condoName={condoName} userRole={userRole} activeUnitId={activeUnitId} />;
-            case AppView.MODEL_770: return <Model770 onBack={() => setCurrentView(AppView.HOME)} selectedYear={selectedYear} transactions={transactions} condoName={condoName} />;
-            // Aggiungi qui gli altri case per le view mancanti...
-            default: return <Home condoName={condoName} selectedYear={selectedYear} onYearChange={setSelectedYear} onNavigate={handleNavigate} categories={categories} transactions={transactions} isDarkMode={isDarkMode} onToggleDarkMode={() => setIsDarkMode(!isDarkMode)} units={units} insurancePolicies={insurancePolicies} onCloseCondo={handleLogout} userRole={userRole} activeUnitId={activeUnitId} />;
-          }
-        })()}
-      </main>
-      <Dock 
-        currentView={currentView} 
-        onViewChange={handleNavigate} 
-        userRole={userRole} 
-      />
-      
-      {/* 2. AGGIUNGI LA CHIUSURA DEL DIV E DEL COMPONENTE */}
-      {isSyncing && (
-        <div className="fixed bottom-24 right-6 bg-slate-900 text-white px-4 py-2 rounded-full text-[8px] font-black uppercase flex items-center gap-2 animate-pulse">
-          <RefreshCcw size={12} className="animate-spin" /> Sync...
-        </div>
-      )}
-    </div>
-  );
-};
-export default App;
+            case AppView.HOME: 
+              return <Home condoName={condoName} selectedYear={selectedYear} onYearChange={setSelectedYear} onNavigate={handleNavigate} categories={categories} transactions={transactions} isDarkMode={isDarkMode} onToggleDarkMode={() => setIsDarkMode(!isDarkMode)} units={units} insurancePolicies={insurancePolicies} onNameChange={(name) => setCondoName(name)} onCloseCondo={handleLogout} userRole={userRole} activeUnitId={activeUnitId} />;
+            case AppView.EXPENSES: 
+              return <Expenses onBack={() => setCurrentView(AppView.HOME)} categories={categories} transactions={transactions} onTransactionsChange={setTransactions} millesimalTables={millesimalTables} bankAccounts={bankAccounts} units={units} userRole={userRole} activeUnitId={activeUnitId} />;
+            case AppView.INCOME:
+              return <Income onBack={() => setCurrentView(AppView.HOME)} transactions={transactions} onTransactionsChange={setTransactions} units={units} categories={categories} bankAccounts={bankAccounts} userRole={userRole} activeUnitId={activeUnitId} />;
+            case AppView.WATER:
+              return <Water onBack={() => setCurrentView(AppView.HOME)} meters={waterMeters} readings={waterReadings} units={units} selectedYear={selectedYear} userRole={userRole} />;
+            case AppView.UNITS:
+              return <Units onBack={() => setCurrentView(AppView.HOME)} units={units} onUnitsChange={setUnits} userRole={userRole} />;
+            case AppView.BUDGET: 
+              return <Budget onBack={() => setCurrentView(AppView.HOME)} transactions={transactions} units={units} categories={categories} tables={millesimalTables} selectedYear={selectedYear} waterReadings={waterReadings} waterMeters={waterMeters} isDarkMode={isDarkMode} condoId={condoId} condoName={condoName} userRole={userRole} activeUnitId={activeUnitId} />;
+            case AppView.MODEL_770: 
+              return <Model770 onBack={() => setCurrentView(AppView.HOME)} selectedYear={selectedYear} transactions={transactions} condoName={condoName} />;
+            default: 
+              return <Home condoName={condoName} selectedYear={selectedYear} onYearChange={setSelectedYear} onNavigate={handleNavigate}
